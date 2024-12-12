@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Study Group - SGH</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-brand">SGH</div>
+        <div class="nav-links">
+            <a href="/index">Home</a>
+            <a href="/groups">Study Groups</a>
+            <a href="/schedule">Schedule</a>
+            <a href="/profile">Profile</a>
+            <a href="#" id="logoutBtn">Logout</a>
+        </div>
+    </nav>
+
+    <!-- Create Group Form -->
+    <div class="create-group-container">
+        <div class="create-group-box">
+            <h1>Create Study Group</h1>
+
+            <form id="createGroupForm" class="create-group-form">
+                <div class="form-section">
+                    <h2>Basic Information</h2>
+                    <div class="form-group">
+                        <label>Group Name</label>
+                        <input type="text" id="groupName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Subject</label>
+                        <input type="text" id="subject" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Maximum Members</label>
+                            <input type="number" id="maxMembers" min="2" max="50" value="10" required>
+                            <small>Set the maximum number of members allowed in this group</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Level</label>
+                            <select id="level" required>
+                                <option value="M1">M1</option>
+                                <option value="M2">M2</option>
+                                <option value="M3">M3</option>
+                                <option value="M4">M4</option>
+                                <option value="M5">M5</option>
+                                <option value="M6">M6</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h2>Meeting Schedule</h2>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Day</label>
+                            <select id="meetingDay" required>
+                                <option value="Monday">Monday</option>
+                                <option value="Tuesday">Tuesday</option>
+                                <option value="Wednesday">Wednesday</option>
+                                <option value="Thursday">Thursday</option>
+                                <option value="Friday">Friday</option>
+                                <option value="Saturday">Saturday</option>
+                                <option value="Sunday">Sunday</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Time</label>
+                            <input type="time" id="meetingTime" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h2>Group Description</h2>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="description" rows="4" required></textarea>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="cancel-btn" onclick="window.location.href='/groups'">Cancel</button>
+                    <button type="submit" class="create-btn">Create Group</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('createGroupForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const newGroup = {
+                id: Date.now().toString(),
+                name: document.getElementById('groupName').value,
+                subject: document.getElementById('subject').value,
+                meetingDay: document.getElementById('meetingDay').value,
+                meetingTime: document.getElementById('meetingTime').value,
+                description: document.getElementById('description').value,
+                level: document.getElementById('level').value,
+                maxMembers: document.getElementById('maxMembers').value || null,
+                createdBy: JSON.parse(localStorage.getItem('currentUser')).email,
+                members: [JSON.parse(localStorage.getItem('currentUser')).email]
+            };
+
+            // Get existing groups or initialize empty array
+            const existingGroups = JSON.parse(localStorage.getItem('studyGroups')) || [];
+
+            // Add new group
+            existingGroups.push(newGroup);
+
+            // Save back to localStorage
+            localStorage.setItem('studyGroups', JSON.stringify(existingGroups));
+
+            console.log('Group created:', newGroup);
+            console.log('All groups:', existingGroups);
+
+            // Redirect to groups page
+            window.location.href = '/groups';
+        });
+
+        // Logout functionality
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            localStorage.removeItem('currentUser');
+            window.location.href = '/login';
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Friends - SGH</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-brand">SGH</div>
+        <div class="nav-links">
+            <a href="/index">Home</a>
+            <a href="/groups">Study Groups</a>
+            <a href="/schedule">Schedule</a>
+            <a href="/friends" class="active">Friends</a>
+            <a href="/profile">Profile</a>
+            <a href="#" id="logoutBtn">Logout</a>
+        </div>
+    </nav>
+
+    <div class="friends-container">
+        <!-- Search Bar -->
+        <div class="search-section">
+            <div class="search-box">
+                <input type="text" id="searchUsers" placeholder="Search users...">
+                <i class="fas fa-search"></i>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="friends-content">
+            <!-- Friends List Section -->
+            <div class="friends-section">
+                <h2><i class="fas fa-user-friends"></i> My Friends</h2>
+                <div id="friendsList" class="friends-grid">
+                    <!-- Friends will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Friend Requests Section -->
+            <div class="friends-section">
+                <h2><i class="fas fa-user-plus"></i> Friend Requests</h2>
+                <div id="requestsList" class="requests-list">
+                    <!-- Friend requests will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Suggested Friends Section -->
+            <div class="friends-section">
+                <h2><i class="fas fa-users"></i> Suggested Friends</h2>
+                <div id="suggestedList" class="friends-grid">
+                    <!-- Suggested friends will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Profile Modal -->
+    <div id="userProfileModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div class="user-profile-view">
+                <div class="profile-header">
+                    <img id="modalProfileImage" src="images/default-avatar.png" alt="Profile Picture">
+                    <h2 id="modalUsername">Username</h2>
+                    <div id="friendActionBtn" class="friend-action-btn"></div>
+                </div>
+                <div class="profile-details">
+                    <div class="detail-item">
+                        <i class="fas fa-graduation-cap"></i>
+                        <span id="modalMajor">Major</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-book"></i>
+                        <span id="modalInterests">Interests</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-info-circle"></i>
+                        <span id="modalBio">Bio</span>
+                    </div>
+                </div>
+                <div class="shared-groups">
+                    <h3>Shared Study Groups</h3>
+                    <div id="modalSharedGroups" class="shared-groups-list">
+                        <!-- Shared groups will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            loadFriends();
+            loadFriendRequests();
+            loadSuggestedFriends();
+            setupSearchListener();
+        });
+
+        function loadFriends() {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            const friends = currentUser.friends || [];
+
+            const friendsList = document.getElementById('friendsList');
+
+            if (friends.length === 0) {
+                friendsList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-user-friends"></i>
+                        <p>No friends yet</p>
+                    </div>
+                `;
+                return;
+            }
+
+            friendsList.innerHTML = friends.map(friendEmail => {
+                const friend = users.find(u => u.email === friendEmail);
+                if (!friend) return '';
+
+                return `
+                    <div class="friend-card">
+                        <img src="${friend.profileImage || 'images/default-avatar.png'}" alt="${friend.username}">
+                        <div class="friend-info">
+                            <h3>${friend.username}</h3>
+                            <p>${friend.major || 'No major specified'}</p>
+                        </div>
+                        <div class="friend-actions">
+                            <button onclick="viewProfile('${friend.email}')" class="view-profile-btn">
+                                <i class="fas fa-user"></i>
+                            </button>
+                            <button onclick="removeFriend('${friend.email}')" class="remove-friend-btn">
+                                <i class="fas fa-user-minus"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function loadFriendRequests() {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            const requests = currentUser.friendRequests || [];
+
+            const requestsList = document.getElementById('requestsList');
+
+            if (requests.length === 0) {
+                requestsList.innerHTML = `
+                    <div class="empty-state">
+                        <p>No pending friend requests</p>
+                    </div>
+                `;
+                return;
+            }
+
+            requestsList.innerHTML = requests.map(requestEmail => {
+                const requester = users.find(u => u.email === requestEmail);
+                if (!requester) return '';
+
+                return `
+                    <div class="request-card">
+                        <img src="${requester.profileImage || 'images/default-avatar.png'}" alt="${requester.username}">
+                        <div class="request-info">
+                            <h3>${requester.username}</h3>
+                            <p>${requester.major || 'No major specified'}</p>
+                        </div>
+                        <div class="request-actions">
+                            <button onclick="acceptRequest('${requester.email}')" class="accept-btn">
+                                <i class="fas fa-check"></i>
+                            </button>
+                            <button onclick="declineRequest('${requester.email}')" class="decline-btn">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function loadSuggestedFriends() {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            const friends = currentUser.friends || [];
+            const requests = currentUser.friendRequests || [];
+
+            // Filter out current user, friends, and pending requests
+            const suggested = users.filter(user =>
+                user.email !== currentUser.email &&
+                !friends.includes(user.email) &&
+                !requests.includes(user.email)
+            );
+
+            const suggestedList = document.getElementById('suggestedList');
+
+            if (suggested.length === 0) {
+                suggestedList.innerHTML = `
+                    <div class="empty-state">
+                        <p>No suggestions available</p>
+                    </div>
+                `;
+                return;
+            }
+
+            suggestedList.innerHTML = suggested.map(user => `
+                <div class="friend-card">
+                    <img src="${user.profileImage || 'images/default-avatar.png'}" alt="${user.username}">
+                    <div class="friend-info">
+                        <h3>${user.username}</h3>
+                        <p>${user.major || 'No major specified'}</p>
+                    </div>
+                    <div class="friend-actions">
+                        <button onclick="viewProfile('${user.email}')" class="view-profile-btn">
+                            <i class="fas fa-user"></i>
+                        </button>
+                        <button onclick="sendFriendRequest('${user.email}')" class="add-friend-btn">
+                            <i class="fas fa-user-plus"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function setupSearchListener() {
+            document.getElementById('searchUsers').addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                const users = JSON.parse(localStorage.getItem('users')) || [];
+                const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+
+                const filtered = users.filter(user =>
+                    user.email !== currentUser.email &&
+                    (user.username.toLowerCase().includes(searchTerm) ||
+                     user.major?.toLowerCase().includes(searchTerm))
+                );
+
+                // Update suggested list with search results
+                const suggestedList = document.getElementById('suggestedList');
+                suggestedList.innerHTML = filtered.map(user => `
+                    <div class="friend-card">
+                        <img src="${user.profileImage || 'images/default-avatar.png'}" alt="${user.username}">
+                        <div class="friend-info">
+                            <h3>${user.username}</h3>
+                            <p>${user.major || 'No major specified'}</p>
+                        </div>
+                        <div class="friend-actions">
+                            <button onclick="viewProfile('${user.email}')" class="view-profile-btn">
+                                <i class="fas fa-user"></i>
+                            </button>
+                            <button onclick="sendFriendRequest('${user.email}')" class="add-friend-btn">
+                                <i class="fas fa-user-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            });
+        }
+
+        // Friend actions
+        function sendFriendRequest(targetEmail) {
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            const targetUser = users.find(u => u.email === targetEmail);
+
+            if (!targetUser) return;
+
+            targetUser.friendRequests = targetUser.friendRequests || [];
+            targetUser.friendRequests.push(JSON.parse(localStorage.getItem('currentUser')).email);
+
+            localStorage.setItem('users', JSON.stringify(users));
+            alert('Friend request sent!');
+            loadSuggestedFriends();
+        }
+
+        function acceptRequest(requesterEmail) {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+
+            // Update current user
+            currentUser.friends = currentUser.friends || [];
+            currentUser.friends.push(requesterEmail);
+            currentUser.friendRequests = currentUser.friendRequests.filter(
+                email => email !== requesterEmail
+            );
+
+            // Update requester
+            const requesterIndex = users.findIndex(u => u.email === requesterEmail);
+            if (requesterIndex !== -1) {
+                users[requesterIndex].friends = users[requesterIndex].friends || [];
+                users[requesterIndex].friends.push(currentUser.email);
+            }
+
+            // Update localStorage
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            localStorage.setItem('users', JSON.stringify(users));
+
+            loadFriends();
+            loadFriendRequests();
+        }
+
+        function declineRequest(requesterEmail) {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            currentUser.friendRequests = currentUser.friendRequests.filter(
+                email => email !== requesterEmail
+            );
+
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            loadFriendRequests();
+        }
+
+        function removeFriend(friendEmail) {
+            if (!confirm('Are you sure you want to remove this friend?')) return;
+
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+
+            // Remove from current user's friends
+            currentUser.friends = currentUser.friends.filter(
+                email => email !== friendEmail
+            );
+
+            // Remove from friend's friends list
+            const friendIndex = users.findIndex(u => u.email === friendEmail);
+            if (friendIndex !== -1) {
+                users[friendIndex].friends = users[friendIndex].friends.filter(
+                    email => email !== currentUser.email
+                );
+            }
+
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            localStorage.setItem('users', JSON.stringify(users));
+
+            loadFriends();
+        }
+
+        function viewProfile(userEmail) {
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            const user = users.find(u => u.email === userEmail);
+
+            if (!user) return;
+
+            // Update modal content
+            document.getElementById('modalProfileImage').src = user.profileImage || 'images/default-avatar.png';
+            document.getElementById('modalUsername').textContent = user.username;
+            document.getElementById('modalMajor').textContent = user.major || 'No major specified';
+            document.getElementById('modalInterests').textContent = user.interests || 'No interests specified';
+            document.getElementById('modalBio').textContent = user.bio || 'No bio available';
+
+            // Show shared groups
+            const groups = JSON.parse(localStorage.getItem('studyGroups')) || [];
+            const sharedGroups = groups.filter(group =>
+                group.members.includes(userEmail) &&
+                group.members.includes(JSON.parse(localStorage.getItem('currentUser')).email)
+            );
+
+            document.getElementById('modalSharedGroups').innerHTML = sharedGroups.length ?
+                sharedGroups.map(group => `
+                    <div class="shared-group-item">
+                        <span>${group.name}</span>
+                        <span class="subject-tag">${group.subject}</span>
+                    </div>
+                `).join('') :
+                '<p>No shared study groups</p>';
+
+            // Show modal
+            document.getElementById('userProfileModal').style.display = 'block';
+        }
+
+        // Close modal when clicking X or outside
+        document.querySelector('.close').onclick = function() {
+            document.getElementById('userProfileModal').style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('userProfileModal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="styles.css">
+</body>
+</html>

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Consultants - Study Group Hub</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation (same as index.html) -->
+
+    <!-- Consultants Header -->
+    <header class="consultants-header">
+        <h1>Our Expert Consultants</h1>
+        <div class="filter-container">
+            <select id="subjectFilter">
+                <option value="">All Subjects</option>
+                <option value="mathematics">Mathematics</option>
+                <option value="physics">Physics</option>
+                <!-- Add more subjects -->
+            </select>
+            <select id="availabilityFilter">
+                <option value="">Any Availability</option>
+                <option value="morning">Morning</option>
+                <option value="afternoon">Afternoon</option>
+                <option value="evening">Evening</option>
+            </select>
+        </div>
+    </header>
+
+    <!-- Consultants Grid -->
+    <section class="consultants-grid">
+        <div class="consultant-card">
+            <div class="consultant-image">
+                <img src="assets/consultant1.jpg" alt="Consultant">
+                <span class="availability online"></span>
+            </div>
+            <div class="consultant-info">
+                <h3>Prof. Michael Chen</h3>
+                <p class="specialty">Mathematics Expert</p>
+                <div class="expertise-tags">
+                    <span>Calculus</span>
+                    <span>Linear Algebra</span>
+                </div>
+                <p class="experience"><i class="fas fa-star"></i> 4.9 (120 reviews)</p>
+                <div class="consultant-actions">
+                    <button class="view-profile">View Profile</button>
+                    <button class="book-session">Book Session</button>
+                </div>
+            </div>
+        </div>
+        <!-- Add more consultant cards -->
+    </section>
+
+    <!-- Footer (same as index.html) -->
+</body>
+</html> 

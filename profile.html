@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - SGH</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-brand">SGH</div>
+        <div class="nav-links">
+            <a href="/index">Home</a>
+            <a href="/groups">Study Groups</a>
+            <a href="/schedule">Schedule</a>
+            <a href="/profile" class="active">Profile</a>
+            <a href="#" id="logoutBtn">Logout</a>
+        </div>
+    </nav>
+
+    <div class="profile-container">
+        <div class="profile-header">
+            <div class="profile-image-container">
+                <img id="profileImage" src="images/default-avatar.png" alt="Profile Picture">
+                <label for="imageUpload" class="image-upload-btn">
+                    <i class="fas fa-camera"></i>
+                </label>
+                <input type="file" id="imageUpload" accept="image/*" style="display: none;">
+            </div>
+            <h1 id="profileName">Loading...</h1>
+        </div>
+
+        <div class="profile-content">
+            <div class="profile-section">
+                <h2>Personal Information</h2>
+                <form id="profileForm" class="profile-form">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="major">Major/Field of Study</label>
+                        <input type="text" id="major">
+                    </div>
+                    <div class="form-group">
+                        <label for="interests">Study Interests</label>
+                        <input type="text" id="interests" placeholder="e.g., Mathematics, Physics, Programming">
+                    </div>
+                    <div class="form-group">
+                        <label for="bio">Bio</label>
+                        <textarea id="bio" rows="4" placeholder="Tell us about yourself..."></textarea>
+                    </div>
+                    <button type="submit" class="save-btn">Save Changes</button>
+                </form>
+            </div>
+
+            <div class="profile-section">
+                <h2>My Study Groups</h2>
+                <div id="myGroups" class="my-groups-grid">
+                    <!-- Groups will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            if (!currentUser) {
+                window.location.href = '/login';
+                return;
+            }
+
+            // Load user profile
+            document.getElementById('profileName').textContent = currentUser.username;
+            document.getElementById('username').value = currentUser.username;
+            document.getElementById('email').value = currentUser.email;
+            document.getElementById('major').value = currentUser.major || '';
+            document.getElementById('interests').value = currentUser.interests || '';
+            document.getElementById('bio').value = currentUser.bio || '';
+
+            if (currentUser.profileImage) {
+                document.getElementById('profileImage').src = currentUser.profileImage;
+            }
+
+            // Handle image upload
+            document.getElementById('imageUpload').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const profileImage = document.getElementById('profileImage');
+                        profileImage.src = e.target.result;
+
+                        // Save image to user profile
+                        currentUser.profileImage = e.target.result;
+                        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+
+                        // Update in users array
+                        const users = JSON.parse(localStorage.getItem('users')) || [];
+                        const userIndex = users.findIndex(u => u.email === currentUser.email);
+                        if (userIndex !== -1) {
+                            users[userIndex].profileImage = e.target.result;
+                            localStorage.setItem('users', JSON.stringify(users));
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // Handle form submission
+            document.getElementById('profileForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                const updatedUser = {
+                    ...currentUser,
+                    username: document.getElementById('username').value,
+                    major: document.getElementById('major').value,
+                    interests: document.getElementById('interests').value,
+                    bio: document.getElementById('bio').value
+                };
+
+                // Update in localStorage
+                localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+
+                // Update in users array
+                const users = JSON.parse(localStorage.getItem('users')) || [];
+                const userIndex = users.findIndex(u => u.email === currentUser.email);
+                if (userIndex !== -1) {
+                    users[userIndex] = updatedUser;
+                    localStorage.setItem('users', JSON.stringify(users));
+                }
+
+                alert('Profile updated successfully!');
+            });
+
+            // Load user's groups
+            loadMyGroups();
+        });
+
+        function loadMyGroups() {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            const groups = JSON.parse(localStorage.getItem('studyGroups')) || [];
+            const myGroups = groups.filter(group => group.members.includes(currentUser.email));
+
+            const myGroupsContainer = document.getElementById('myGroups');
+
+            if (myGroups.length === 0) {
+                myGroupsContainer.innerHTML = `
+                    <div class="empty-groups">
+                        <i class="fas fa-users-slash"></i>
+                        <p>You haven't joined any study groups yet.</p>
+                        <a href="/groups" class="join-group-btn">Find Groups</a>
+                    </div>
+                `;
+                return;
+            }
+
+            myGroupsContainer.innerHTML = myGroups.map(group => `
+                <div class="group-card">
+                    <div class="group-header">
+                        <h3>${group.name}</h3>
+                        <span class="subject-tag">${group.subject}</span>
+                    </div>
+                    <div class="group-info">
+                        <p><i class="fas fa-users"></i> ${group.members.length} members</p>
+                        <p><i class="fas fa-clock"></i> ${group.meetingDay}s at ${group.meetingTime}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Logout functionality
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            localStorage.removeItem('currentUser');
+            window.location.href = '/login';
+        });
+    </script>
+</body>
+</html>

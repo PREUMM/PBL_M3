@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schedule - Study Group Hub</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-brand">SGH</div>
+        <div class="nav-links">
+            <a href="/index">Home</a>
+            <a href="/groups">Study Groups</a>
+            <a href="/schedule" class="active">Schedule</a>
+            <a href="/profile">Profile</a>
+            <a href="#" id="logoutBtn">Logout</a>
+        </div>
+    </nav>
+
+    <div class="schedule-container">
+        <div class="schedule-header">
+            <h1>Study Schedule</h1>
+            <div class="schedule-actions">
+                <select id="weekSelector">
+                    <option value="current">Current Week</option>
+                    <option value="next">Next Week</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="schedule-grid">
+            <div class="time-column">
+                <div class="time-header">Time</div>
+                <div class="time-slot">9:00 AM</div>
+                <div class="time-slot">10:00 AM</div>
+                <div class="time-slot">11:00 AM</div>
+                <div class="time-slot">12:00 PM</div>
+                <div class="time-slot">1:00 PM</div>
+                <div class="time-slot">2:00 PM</div>
+                <div class="time-slot">3:00 PM</div>
+                <div class="time-slot">4:00 PM</div>
+                <div class="time-slot">5:00 PM</div>
+            </div>
+
+            <div class="day-column" id="monday">
+                <div class="day-header">Monday</div>
+                <div class="sessions-container"></div>
+            </div>
+
+            <div class="day-column" id="tuesday">
+                <div class="day-header">Tuesday</div>
+                <div class="sessions-container"></div>
+            </div>
+
+            <div class="day-column" id="wednesday">
+                <div class="day-header">Wednesday</div>
+                <div class="sessions-container"></div>
+            </div>
+
+            <div class="day-column" id="thursday">
+                <div class="day-header">Thursday</div>
+                <div class="sessions-container"></div>
+            </div>
+
+            <div class="day-column" id="friday">
+                <div class="day-header">Friday</div>
+                <div class="sessions-container"></div>
+            </div>
+        </div>
+
+        <!-- Session Details Modal -->
+        <div id="sessionModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2 id="modalGroupName"></h2>
+                <div id="modalDetails"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSchedule();
+
+            // Week selector event
+            document.getElementById('weekSelector').addEventListener('change', loadSchedule);
+        });
+
+        function loadSchedule() {
+            const groups = JSON.parse(localStorage.getItem('studyGroups')) || [];
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+
+            // Clear existing sessions
+            document.querySelectorAll('.sessions-container').forEach(container => {
+                container.innerHTML = '';
+            });
+
+            // Filter groups where user is a member
+            const userGroups = groups.filter(group => group.members.includes(currentUser.email));
+
+            userGroups.forEach(group => {
+                const dayColumn = document.getElementById(group.meetingDay.toLowerCase());
+                if (dayColumn) {
+                    const sessionContainer = dayColumn.querySelector('.sessions-container');
+                    const session = createSessionElement(group);
+                    sessionContainer.appendChild(session);
+                }
+            });
+        }
+
+        function createSessionElement(group) {
+            const session = document.createElement('div');
+            session.className = 'session-card';
+            session.style.backgroundColor = getRandomColor(0.2); // Light background
+
+            session.innerHTML = `
+                <div class="session-time">${group.meetingTime}</div>
+                <div class="session-title">${group.name}</div>
+                <div class="session-subject">${group.subject}</div>
+            `;
+
+            // Add click event for session details
+            session.addEventListener('click', () => showSessionDetails(group));
+
+            return session;
+        }
+
+        function showSessionDetails(group) {
+            const modal = document.getElementById('sessionModal');
+            const modalGroupName = document.getElementById('modalGroupName');
+            const modalDetails = document.getElementById('modalDetails');
+
+            modalGroupName.textContent = group.name;
+            modalDetails.innerHTML = `
+                <p><strong>Subject:</strong> ${group.subject}</p>
+                <p><strong>Time:</strong> ${group.meetingDay}s at ${group.meetingTime}</p>
+                <p><strong>Members:</strong> ${group.members.length}</p>
+                <p><strong>Level:</strong> ${group.level || 'All Levels'}</p>
+                ${group.description ? `<p><strong>Description:</strong> ${group.description}</p>` : ''}
+            `;
+
+            modal.style.display = 'block';
+        }
+
+        // Close modal when clicking X or outside
+        document.querySelector('.close').onclick = function() {
+            document.getElementById('sessionModal').style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('sessionModal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        function getRandomColor(opacity = 1) {
+            const colors = [
+                `rgba(255, 218, 121, ${opacity})`, // Gold
+                `rgba(169, 214, 229, ${opacity})`, // Light Blue
+                `rgba(252, 182, 159, ${opacity})`, // Coral
+                `rgba(188, 231, 132, ${opacity})`, // Light Green
+                `rgba(235, 177, 222, ${opacity})`  // Pink
+            ];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        // Logout functionality
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            localStorage.removeItem('currentUser');
+            window.location.href = '/login';
+        });
+    </script>
+</body>
+</html>

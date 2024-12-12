@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Study Group Hub</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-box">
+            <div class="brand-logo">
+                <h1 class="monogram">SGH</h1>
+            </div>
+            <h2>Welcome Back</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="email" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="password" required>
+                </div>
+                <button type="submit">SIGN IN</button>
+            </form>
+            <p>New to Study Group Hub? <a href="/register">Create Account</a></p>
+        </div>
+    </div>
+
+    <script>
+        console.log(fetch("localhost:3000/get"));
+        console.log(fetch("localhost:3000/get"));
+        console.log(fetch("localhost:3000/get"));
+        console.log(fetch("localhost:3000/get"));
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            const user = users.find(u => u.email === email && u.password === password);
+
+            if (user) {
+                localStorage.setItem('currentUser', JSON.stringify(user));
+                alert('Login successful!');
+                window.location.href = '/index';
+            } else {
+                alert('Invalid email or password!');
+            }
+        });
+    </script>
+</body>
+</html>

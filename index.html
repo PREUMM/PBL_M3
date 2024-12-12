@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Group Hub</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-brand">SGH</div>
+        <div class="nav-links">
+            <a href="/index" class="active">Home</a>
+            <a href="/groups">Study Groups</a>
+            <a href="/schedule">Schedule</a>
+            <a href="/friends">Friends</a>
+            <a href="/profile">Profile</a>
+            <a href="#" id="logoutBtn">Logout</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="hero">
+        <h1>Study Group Hub</h1>
+        <p>Connect with fellow students and excel together</p>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <a href="/groups" class="action-card">
+                <i class="fas fa-search"></i>
+                <span>Browse Groups</span>
+            </a>
+            <a href="/create-group" class="action-card">
+                <i class="fas fa-plus"></i>
+                <span>Create Group</span>
+            </a>
+            <a href="/schedule" class="action-card">
+                <i class="fas fa-calendar"></i>
+                <span>View Schedule</span>
+            </a>
+        </div>
+
+        <!-- Study Groups Section -->
+        <section class="groups-section">
+            <div class="section-header">
+                <h2>Active Study Groups</h2>
+                <a href="/groups" class="view-all">View All Groups <i class="fas fa-arrow-right"></i></a>
+            </div>
+            <div class="groups-grid" id="groupsGrid">
+                <!-- Groups will be loaded here -->
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Check if user is logged in
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentUser = localStorage.getItem('currentUser');
+            if (!currentUser) {
+                window.location.href = '/login';
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadGroups();
+        });
+
+        function loadGroups() {
+            const groupsGrid = document.getElementById('groupsGrid');
+            const groups = JSON.parse(localStorage.getItem('studyGroups')) || [];
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+
+            // Show loading state
+            groupsGrid.innerHTML = `
+                <div class="loading-state">
+                    <div class="loading-spinner"></div>
+                    <p>Loading study groups...</p>
+                </div>
+            `;
+
+            setTimeout(() => {
+                if (groups.length === 0) {
+                    groupsGrid.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-users-slash"></i>
+                            <h3>No Active Study Groups</h3>
+                            <p>Create a new group to get started!</p>
+                            <a href="/create-group" class="create-group-btn">
+                                <i class="fas fa-plus"></i> Create First Group
+                            </a>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Show only the first 3 groups on homepage
+                const recentGroups = groups.slice(0, 3);
+                groupsGrid.innerHTML = '';
+
+                recentGroups.forEach(group => {
+                    const isJoined = group.members.includes(currentUser.email);
+                    const card = document.createElement('div');
+                    card.className = 'group-card';
+                    card.innerHTML = `
+                        <div class="group-header">
+                            <h3>${group.name}</h3>
+                            <span class="subject-tag">${group.subject}</span>
+                        </div>
+                        <div class="group-info">
+                            <p><i class="fas fa-users"></i> ${group.members.length} members</p>
+                            <p><i class="fas fa-clock"></i> ${group.meetingDay}s at ${group.meetingTime}</p>
+                            <p><i class="fas fa-signal"></i> ${group.level || 'All Levels'}</p>
+                        </div>
+                        <button onclick="handleGroupAction('${group.id}', ${isJoined})"
+                                class="${isJoined ? 'leave-btn' : 'join-btn'}">
+                            ${isJoined ? 'Leave Group' : 'Join Group'}
+                        </button>
+                    `;
+                    groupsGrid.appendChild(card);
+                });
+            }, 1000); // Simulated loading delay
+        }
+
+        function handleGroupAction(groupId, isJoined) {
+            const groups = JSON.parse(localStorage.getItem('studyGroups')) || [];
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+
+            const groupIndex = groups.findIndex(g => g.id === groupId);
+
+            if (groupIndex !== -1) {
+                if (isJoined) {
+                    groups[groupIndex].members = groups[groupIndex].members.filter(
+                        member => member !== currentUser.email
+                    );
+                } else {
+                    groups[groupIndex].members.push(currentUser.email);
+                }
+
+                localStorage.setItem('studyGroups', JSON.stringify(groups));
+                loadGroups();
+            }
+        }
+
+        // Logout functionality
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            localStorage.removeItem('currentUser');
+            window.location.href = '/login';
+        });
+    </script>
+
+    <div class="container">
+        <div class="main-content">
+            <!-- Content will be loaded here -->
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Groups - SGH</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-brand">SGH</div>
+        <div class="nav-links">
+            <a href="/index">Home</a>
+            <a href="/groups" class="active">Study Groups</a>
+            <a href="/schedule">Schedule</a>
+            <a href="/profile">Profile</a>
+            <a href="#" id="logoutBtn">Logout</a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="groups-container">
+        <div class="page-header">
+            <h1>Study Groups</h1>
+            <a href="/create-group" class="create-new-group">
+                <i class="fas fa-plus"></i>
+                Create New Group
+            </a>
+        </div>
+
+        <div class="search-filters">
+            <div class="search-box">
+                <input type="text" id="searchGroups" placeholder="Search groups...">
+                <i class="fas fa-search"></i>
+            </div>
+            <select id="levelFilter">
+                <option value="">All Levels</option>
+                <option value="M1">M1</option>
+                <option value="M2">M2</option>
+                <option value="M3">M3</option>
+                <option value="M4">M4</option>
+                <option value="M5">M5</option>
+                <option value="M6">M6</option>
+            </select>
+        </div>
+
+        <section class="active-groups">
+            <div class="groups-grid" id="groupsGrid">
+                <!-- Groups will be loaded here -->
+            </div>
+        </section>
+    </div>
+
+    <!-- Group Details Popup -->
+    <div id="groupPopup" class="popup">
+        <div class="popup-content">
+            <span class="close-popup">&times;</span>
+            <div class="popup-header">
+                <h2 id="popupGroupName"></h2>
+                <span id="popupSubject" class="subject-tag"></span>
+            </div>
+            <div class="popup-body">
+                <div class="popup-info">
+                    <p><i class="fas fa-clock"></i> <span id="popupTime"></span></p>
+                    <p><i class="fas fa-users"></i> <span id="popupMembers"></span></p>
+                    <p><i class="fas fa-signal"></i> <span id="popupLevel"></span></p>
+                </div>
+                <div class="popup-description">
+                    <h3>Description</h3>
+                    <p id="popupDescription"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add this script to check if groups are loading -->
+    <script>
+        // Debug function to show what's in localStorage
+        function checkGroups() {
+            const groups = JSON.parse(localStorage.getItem('studyGroups')) || [];
+            console.log('Current groups in storage:', groups);
+            return groups;
+        }
+
+        // Call it when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Page loaded, checking groups...');
+            const groups = checkGroups();
+
+            if (groups.length === 0) {
+                console.log('No groups found');
+                document.getElementById('groupsGrid').innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-users-slash"></i>
+                        <h3>No Active Study Groups</h3>
+                        <p>Create a new group to get started!</p>
+                    </div>
+                `;
+            } else {
+                console.log(`Found ${groups.length} groups`);
+            }
+        });
+    </script>
+
+    <!-- Load the groups.js file -->
+    <script src="js/groups.js"></script>
+</body>
+</html>
