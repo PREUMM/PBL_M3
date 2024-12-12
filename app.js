@@ -5,7 +5,6 @@ app.use(express.static('public'))
 
 app.get('/', (req, res) => {
   res.redirect('/login')
-  console.log(allStorage());
 })
 app.get('/login', (req, res) => {
   res.sendFile(__dirname + '/login.html')
@@ -33,11 +32,6 @@ app.get('/register', (req, res) => {
 })
 app.get('/schedule', (req, res) => {
   res.sendFile(__dirname + '/schedule.html')
-})
-
-app.get('/get', (req, res) => {
-  res.send('EZ')
-  console.log(allStorage());
 })
 
 app.listen(port, () => {
