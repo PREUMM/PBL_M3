@@ -15,6 +15,15 @@ const storage = multer.diskStorage({
     }
 });
 const upload = multer({ storage: storage });
+const { Pool } = require('pg');
+const db = new Pool({
+    connectionString: process.env.DATABASE_URL, // Make sure this is set in Render
+    ssl: { rejectUnauthorized: false } // Required for Render
+});
+
+db.connect()
+    .then(() => console.log("Connected to PostgreSQL"))
+    .catch(err => console.error("Connection error:", err));
 
 app.use("/uploads", express.static("uploads"));
 app.use(bodyParser.urlencoded({ extended: true }));
