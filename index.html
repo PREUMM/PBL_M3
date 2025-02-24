@@ -59,6 +59,13 @@
     </main>
 
     <script>
+        async function fetchData(url) {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json(); // Convert to JSON
+        }
         // Check if user is logged in
         document.addEventListener('DOMContentLoaded', function() {
             const currentUser = localStorage.getItem('currentUser');
@@ -71,11 +78,13 @@
             loadGroups();
         });
 
-        function loadGroups() {
+        async function loadGroups() {
+            const data = await fetchData("/api/db/allGroups");
             const groupsGrid = document.getElementById('groupsGrid');
-            const groups = JSON.parse(localStorage.getItem('studyGroups')) || [];
+            const groups = data
             const currentUser = JSON.parse(localStorage.getItem('currentUser'));
 
+            console.log(groups);
             // Show loading state
             groupsGrid.innerHTML = `
                 <div class="loading-state">
@@ -114,37 +123,64 @@
                         </div>
                         <div class="group-info">
                             <p><i class="fas fa-users"></i> ${group.members.length} members</p>
-                            <p><i class="fas fa-clock"></i> ${group.meetingDay}s at ${group.meetingTime}</p>
+                            <p><i class="fas fa-clock"></i> ${group.meetingday}s at ${group.meetingtime}</p>
                             <p><i class="fas fa-signal"></i> ${group.level || 'All Levels'}</p>
                         </div>
-                        <button onclick="handleGroupAction('${group.id}', ${isJoined})"
-                                class="${isJoined ? 'leave-btn' : 'join-btn'}">
-                            ${isJoined ? 'Leave Group' : 'Join Group'}
-                        </button>
                     `;
                     groupsGrid.appendChild(card);
                 });
-            }, 1000); // Simulated loading delay
+            }, 0); // Simulated loading delay
         }
 
         function handleGroupAction(groupId, isJoined) {
             const groups = JSON.parse(localStorage.getItem('studyGroups')) || [];
             const currentUser = JSON.parse(localStorage.getItem('currentUser'));
 
+            if (!currentUser || !currentUser.email) {
+                console.error("User not logged in or missing email.");
+                return;
+            }
+
             const groupIndex = groups.findIndex(g => g.id === groupId);
 
-            if (groupIndex !== -1) {
-                if (isJoined) {
-                    groups[groupIndex].members = groups[groupIndex].members.filter(
-                        member => member !== currentUser.email
-                    );
-                } else {
-                    groups[groupIndex].members.push(currentUser.email);
-                }
-
-                localStorage.setItem('studyGroups', JSON.stringify(groups));
-                loadGroups();
+            if (groupIndex === -1) {
+                console.error(`Group with ID ${groupId} not found.`);
+                return;
             }
+
+            const userAction = {
+                email: currentUser.email,
+                uid: currentUser.id,
+                group: groupId
+            };
+
+            if (isJoined) {
+                // Leave group
+                groups[groupIndex].members = groups[groupIndex].members.filter(
+                    member => member !== currentUser.email
+                );
+                fetch("/api/db/leaveGroup", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(userAction),
+                }).catch(error => console.error("Error leaving group:", error));
+            } else {
+                // Join group
+                if (!groups[groupIndex].members.includes(currentUser.email)) {
+                    groups[groupIndex].members.push(currentUser.email);
+                    fetch("/api/db/joinGroup", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(userAction),
+                    }).catch(error => console.error("Error joining group:", error));
+                } else {
+                    console.warn("User is already a member of this group.");
+                }
+            }
+
+            // Update localStorage and UI
+            localStorage.setItem('studyGroups', JSON.stringify(groups));
+            loadGroups();
         }
 
         // Logout functionality

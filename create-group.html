@@ -40,7 +40,7 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label>Maximum Members</label>
-                            <input type="number" id="maxMembers" min="2" max="50" value="10" required>
+                            <input type="number" id="maxMembers" min="2" max="100" value="10" required>
                             <small>Set the maximum number of members allowed in this group</small>
                         </div>
                         <div class="form-group">
@@ -96,6 +96,9 @@
     </div>
 
     <script>
+        if (!localStorage.getItem('currentUser')) {
+            window.location.href = "/login";
+        }
         document.getElementById('createGroupForm').addEventListener('submit', function(e) {
             e.preventDefault();
 
@@ -109,20 +112,30 @@
                 level: document.getElementById('level').value,
                 maxMembers: document.getElementById('maxMembers').value || null,
                 createdBy: JSON.parse(localStorage.getItem('currentUser')).email,
-                members: [JSON.parse(localStorage.getItem('currentUser')).email]
+                members: [JSON.parse(localStorage.getItem('currentUser')).email],
+                posts: []
             };
 
+            fetch("/api/db/createGroup", {
+              method: "POST",
+              headers: {"Content-Type": "application/json"},
+              body: JSON.stringify(newGroup),
+            })
+
             // Get existing groups or initialize empty array
-            const existingGroups = JSON.parse(localStorage.getItem('studyGroups')) || [];
+            // const existingGroups = JSON.parse(localStorage.getItem('studyGroups')) || [];
+            //
+            // // Add new group
+            // existingGroups.push(newGroup);
+            //
+            // // Save back to localStorage
+            // localStorage.setItem('studyGroups', JSON.stringify(existingGroups));
 
-            // Add new group
-            existingGroups.push(newGroup);
+            ////////
 
-            // Save back to localStorage
-            localStorage.setItem('studyGroups', JSON.stringify(existingGroups));
 
-            console.log('Group created:', newGroup);
-            console.log('All groups:', existingGroups);
+            // console.log('Group created:', newGroup);
+            // console.log('All groups:', existingGroups);
 
             // Redirect to groups page
             window.location.href = '/groups';

@@ -48,7 +48,7 @@
 
         try {
             const data = await fetchData("/api/db/allUsers"); // Wait for fetchData to resolve
-            const users = data.rows || []; // Extract rows if available
+            const users = data || []; // Extract rows if available
             console.log(data);
             console.log(users);
 

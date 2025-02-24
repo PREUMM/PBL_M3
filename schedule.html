@@ -44,6 +44,10 @@
                 <div class="time-slot">3:00 PM</div>
                 <div class="time-slot">4:00 PM</div>
                 <div class="time-slot">5:00 PM</div>
+                <div class="time-slot">6:00 PM</div>
+                <div class="time-slot">7:00 PM</div>
+                <div class="time-slot">8:00 PM</div>
+                <div class="time-slot">9:00 PM</div>
             </div>
 
             <div class="day-column" id="monday">
@@ -83,6 +87,20 @@
     </div>
 
     <script>
+        async function fetchData(url) {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json(); // Convert to JSON
+        }
+
+        async function fetchGroups() {
+          const data = await fetchData("/api/db/allGroups");
+          localStorage.setItem("studyGroups", JSON.stringify(data));
+          return data
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             loadSchedule();
 
@@ -90,8 +108,11 @@
             document.getElementById('weekSelector').addEventListener('change', loadSchedule);
         });
 
-        function loadSchedule() {
-            const groups = JSON.parse(localStorage.getItem('studyGroups')) || [];
+        async function loadSchedule() {
+            const groups = await fetchGroups();
+            console.log('groups:', groups);
+            console.log('Type of groups:', typeof groups);
+            console.log('Is Array?', Array.isArray(groups));
             const currentUser = JSON.parse(localStorage.getItem('currentUser'));
 
             // Clear existing sessions
@@ -100,16 +121,33 @@
             });
 
             // Filter groups where user is a member
-            const userGroups = groups.filter(group => group.members.includes(currentUser.email));
+            const userGroups = groups.filter(group => group.members?.some(email => email.toLowerCase() === currentUser.email.toLowerCase()));
 
             userGroups.forEach(group => {
-                const dayColumn = document.getElementById(group.meetingDay.toLowerCase());
+                const dayColumn = document.getElementById(group.meetingday.toLowerCase());
                 if (dayColumn) {
                     const sessionContainer = dayColumn.querySelector('.sessions-container');
                     const session = createSessionElement(group);
+
+                    // Convert "HH:MM:SS" to hours
+                    const [hours, minutes] = group.meetingtime.split(':').map(Number);
+
+                    // Ensure time is within 9 AM - 9 PM
+                    if (hours < 9 || hours > 21) {
+                        console.warn(`Skipping ${group.name}: time (${group.meetingtime}) out of range.`);
+                        return;
+                    }
+
+                    // Calculate row index (9 AM = row 1, 10 AM = row 2, ..., 9 PM = row 13)
+                    const rowStart = (hours - 8)/1.5; // Subtract 8 to make 9 AM = 1, 10 AM = 2, etc.
+
+                    // Apply grid positioning
+                    session.style.gridRowStart = rowStart;
+
                     sessionContainer.appendChild(session);
                 }
             });
+
         }
 
         function createSessionElement(group) {

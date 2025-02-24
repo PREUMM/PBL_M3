@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Groups - SGH</title>
+    <link rel="stylesheet" href="/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-brand">SGH</div>
+        <div class="nav-links">
+            <a href="/index">Home</a>
+            <a href="/groups" class="active">Study Groups</a>
+            <a href="/schedule">Schedule</a>
+            <a href="/profile">Profile</a>
+            <a href="#" id="logoutBtn">Logout</a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="groups-container">
+        <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0px;">
+            <div>
+                <h1 id="groupName">Loading...</h1>
+                <h3 id="groupDesc">Loading...</h3>
+            </div>
+            <a href="/groups" class="create-new-group">
+                <i class="fas fa-sign-out-alt"></i>
+                Back
+            </a>
+        </div>
+
+        <div class="page-header" style="display: flex; flex-direction: column; align-items: flex-start; margin-bottom: 5px;">
+            <div style="margin-bottom: 5px;"><h3 style="margin-bottom:5px">Members</h3></div>
+
+            <div id="membersDisplay">
+                <!-- Members will be added here -->
+            </div>
+        </div>
+
+        <h3 style="margin-bottom:10px">Posts</h3>
+        <div class="groups-grid" id="groupsGrid" style="margin-top:0px">
+            <form id="createPostForm" action="/api/db/post" method="post" enctype="multipart/form-data">
+                <div class="profile-section">
+                    <i class="fa-solid fa-user" id="currentUser"></i>
+                    <br><hr>
+                    <input id="postText" type="text" name="text" placeholder="Write a post here..">
+                    <br>
+                    <input id="postImage" type="file" name="image" accept="image/*">
+                    <button type="submit" name="submit">Post</button>
+                </div>
+            </form>
+            <div id="imageDisplay"></div>
+        </div>
+        <div class="groups-grid" id="postsDisplay">
+          <div class="groups-grid" id="groupsGrid" style="margin-top:0px">
+              <div class="profile-section">
+                  <i class="fa-solid fa-user"></i> ADMIN
+                  <br><hr> Loading posts...
+              </div>
+          </div>
+        </div>
+        <br>
+        <div class="groups-grid" id="groupsGrid" style="margin-top:0px">
+            <div class="profile-section">
+                <i class="fa-solid fa-user"></i> ADMIN
+                <br><hr> GROUP CREATED
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function fetchData(url) {
+            const response = await fetch(url);
+            return response.json();
+        }
+        async function checkGroups() {
+            const data = await fetchData("/api/db/allGroups");
+            console.log(data);
+            return data.find(group => group.id == linkId);
+        }
+        async function checkUsers() {
+            const data = await fetchData("/api/db/allUsers");
+            return data;
+        }
+        const linkId = window.location.pathname.split("/").pop();
+        checkGroups().then(group => {
+            console.log(group);
+            const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+            document.getElementById("groupName").innerHTML = group.name;
+            document.getElementById("groupDesc").innerHTML = group.description;
+            document.getElementById("membersDisplay").innerHTML = group.members.map(
+                member => `<div class="profile-section"><i class="fa-solid fa-user"></i>&nbsp&nbsp${member}</div>`
+            ).join("");
+            if (!group) {
+                window.location.href = '/groups';
+                return;
+            }
+            if (!currentUser) {
+                window.location.href = '/groups';
+                return;
+            }
+            if (!group.members.includes(currentUser.email)) {
+                window.location.href = '/groups';
+                return;
+            }
+
+            document.getElementById("currentUser").outerHTML = `<i class="fa-solid fa-user" id="currentUser"></i> ${currentUser.username}`;
+            const postsContainer = document.getElementById("postsDisplay");
+            postsContainer.innerHTML = "";
+
+            group.posts.reverse().forEach(post => {
+                const postData = JSON.parse(post);
+
+                const postElement = `
+                    <div class="groups-grid">
+                        <div class="profile-section">
+                            <i class="fa-solid fa-user"></i> ${postData.user}
+                            <br><hr> ${postData.text}
+                            <br><small>${postData.timestamp}</small>
+                            ${postData.image ? `<br><img src="${postData.image}" width="200">` : ""}
+                        </div>
+                    </div>
+                `;
+
+                postsContainer.innerHTML += postElement;
+            });
+        });
+        document.getElementById("createPostForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const now = new Date();
+            const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+            const groupId = window.location.pathname.split("/").pop();
+
+            const formData = new FormData();
+            formData.append("text", document.getElementById("postText").value);
+            formData.append(
+                "timestamp",
+                `${now.getDate().toString().padStart(2, "0")}/${(now.getMonth() + 1).toString().padStart(2, "0")}/${(now.getFullYear() % 100).toString().padStart(2, "0")} on ${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}:${now.getSeconds().toString().padStart(2, "0")}`
+            );
+            formData.append("image", document.getElementById("postImage").files[0]);
+            formData.append("user", currentUser.username);
+            formData.append("groupId", groupId);
+
+            const response = await fetch("/api/db/post", {
+                method: "POST",
+                body: formData,
+            });
+            const result = await response.json();
+            location.reload();
+        });
+    </script>
+</body>
+</html>

@@ -79,17 +79,26 @@
     <!-- Add this script to check if groups are loading -->
     <script>
         // Debug function to show what's in localStorage
-        function checkGroups() {
-            const groups = JSON.parse(localStorage.getItem('studyGroups')) || [];
+        async function fetchData(url) {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json(); // Convert to JSON
+        }
+
+        async function checkGroups() {
+            const data = await fetchData("/api/db/allGroups");
+            const groups = data
             console.log('Current groups in storage:', groups);
             return groups;
         }
 
         // Call it when page loads
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             console.log('Page loaded, checking groups...');
-            const groups = checkGroups();
-
+            const groups = await checkGroups();
+            console.log(groups);
             if (groups.length === 0) {
                 console.log('No groups found');
                 document.getElementById('groupsGrid').innerHTML = `
